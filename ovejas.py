@@ -3,6 +3,8 @@ import pandas as pd
 import os
 import glob
 import math
+import multiprocessing
+from joblib import Parallel, delayed
 
 def readDate(path):
 
@@ -136,8 +138,8 @@ def readDataFrame(path, file, df):
 
         newMov = df.iloc[x,0]
 
-        if x == 1000: #-------------------------------------------------------------
-            break
+        # if x == 1000: #-------------------------------------------------------------
+        #     break
 
         # print(newMov[0:5])
 
@@ -173,20 +175,12 @@ def readDataFrame(path, file, df):
                 results = results.append(data, ignore_index=True)
                 # print(results)
 
-    print("resultados")
-    print(results)
+    # print("resultados")
+    # print(results)
 
     return results
 
-
-path1 = 'PrimerasMedidas/'
-
-# files = glob.glob(path + "/*.csv")
-
-data_frame = pd.DataFrame()
-content = pd.DataFrame()
-
-for sensor in os.listdir(path1):
+def readSensor(sensor, path1):
 
     print("SENSOR: ")
     print(sensor)
@@ -194,6 +188,8 @@ for sensor in os.listdir(path1):
     path2 = path1 + sensor + "/"
 
     files = os.listdir(path2)
+
+    content = pd.DataFrame()
 
     # checking all the csv files in the
     # specified path
@@ -217,8 +213,18 @@ for sensor in os.listdir(path1):
 
             # break
 
-    print(content)
-content.to_csv('features.csv')
+    # print(content)
+    content.to_csv('CSVs/features_' + str(sensor) + ".csv")
+
+
+
+path1 = 'PrimerasMedidas/'
+
+n_jobs = multiprocessing.cpu_count() - 1
+
+Parallel(n_jobs=n_jobs)(delayed(readSensor)(sensor, path1) for sensor in os.listdir(path1))
+
+
 
 
 
