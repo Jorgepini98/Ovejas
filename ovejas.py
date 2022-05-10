@@ -6,6 +6,50 @@ import math
 import multiprocessing
 from joblib import Parallel, delayed
 
+def isAfter(date1,date2):
+    #format date: yy_mm_dd
+    
+    true = 0
+    
+    year1 = int(date1[0][0])*10 + int(date1[0][1])
+    month1 = int(date1[0][3])*10 + int(date1[0][4])
+    day1 = int(date1[0][6])*10 + int(date1[0][7])
+    hour1 = int(date1[1])
+    min1 = int(date1[2])
+    sec1 = int(date1[3])
+    
+    year2 = int(date2[0][0])*10 + int(date2[0][1])
+    month2 = int(date2[0][3])*10 + int(date2[0][4])
+    day2 = int(date2[0][6])*10 + int(date2[0][7])
+    hour2 = int(date2[1])
+    min2 = int(date2[2])
+    sec2 = int(date2[3])
+    
+    if year1 > year2:
+        true = 1
+    elif year1 == year2:
+    
+        if month1 > month2:
+            true = 1
+        elif month1 == month2:
+        
+            if day1 > day2:
+                true = 1
+            elif day1 == day2: 
+            
+                if hour1 > hour2:
+                    true = 1
+                elif hour1 == hour2: 
+                
+                    if min1 > min2:
+                        true = 1
+                    elif min1 == min2:
+                    
+                        if sec1 > sec2:
+                            true = 1
+                            
+    return true
+
 def readDate(path):
 
     pos = path.find("_")
@@ -123,7 +167,7 @@ def getFeatures(data):
 
     return features
 
-def readDataFrame(path, file, df):
+def readDataFrame(path, file, df, lastDay):
 
     count = 0
     
@@ -155,41 +199,61 @@ def readDataFrame(path, file, df):
             min = readMinutes(time)
             sec = readSeconds(time)
 
-            data = pd.DataFrame(df.loc[(x+1):(x+20)])
+            currentDay = [date,hour,min,sec]
+
+            if isAfter(currentDay,lastDay):
+
+                data = pd.DataFrame(df.loc[(x+1):(x+20)])
 
 
-            features = getFeatures(data)
+                features = getFeatures(data)
 
-            data = pd.DataFrame({'Sensor': [Sensor], 'Date': [date], 'Hour': [hour], 'Minutes': [min], "Seconds": [sec]})
+                data = pd.DataFrame({'Sensor': [Sensor], 'Date': [date], 'Hour': [hour], 'Minutes': [min], "Seconds": [sec]})
 
-            data = pd.concat([data, features], axis=1, join='inner')
+                data = pd.concat([data, features], axis=1, join='inner')
 
-            # print("Data")
-            # print(data)
+                # print("Data")
+                # print(data)
 
-            # type(data)
+                # type(data)
 
-            if x == 0:
-                results = pd.DataFrame(data)
+                if x == 0:
+                    results = pd.DataFrame(data)
+                else:
+                    results = results.append(data, ignore_index=True)
+                    # print(results)
             else:
-                results = results.append(data, ignore_index=True)
-                # print(results)
+                print("Análisis ya realizado")
 
     # print("resultados")
     # print(results)
 
     return results
 
-def readSensor(sensor, path1):
+def readSensor(sensor, raw_path, features_path):
 
     print("SENSOR: ")
     print(sensor)
 
-    path2 = path1 + sensor + "/"
+    path2 = raw_path + sensor + "/"
 
     files = os.listdir(path2)
 
     content = pd.DataFrame()
+
+    existFile = 0
+
+    lastDay = ["00_00_00","0","0","0"]
+
+    try:
+        sensor_features = pd.read_csv(features_path + sensor + ".csv")
+        sensor_features = sensor_features.iloc[:, 1:]
+        existFile = 1
+        lastDay = sensor_features[["Date","Hour","Minutes","Seconds"]]
+        lastDay = (lastDay.iloc[sensor_features.shape[0] - 1,:])
+
+    except:
+        print("No hay .csv previo generado para el Sensor: "+sensor)
 
     # checking all the csv files in the
     # specified path
@@ -205,24 +269,32 @@ def readSensor(sensor, path1):
 
             if content.empty :
 
-                content = readDataFrame(path2, file, df)
+                content = readDataFrame(path2, file, df, lastDay)
 
             else:
 
-                content = content.append(readDataFrame(path2, file, df),  ignore_index=True)
+                content = content.append(readDataFrame(path2, file, df, lastDay),  ignore_index=True)
 
             # break
 
+            print("Sensor: "+sensor+" file: " + file)
+
     # print(content)
-    content.to_csv('CSVs/features_' + str(sensor) + ".csv")
+    if existFile == 1:
+        sensor_features = sensor_features.append(content)
+        sensor_features.to_csv('CSVs/features_' + str(sensor) + ".csv")
+    else:
+        content.to_csv('CSVs/features_' + str(sensor) + ".csv")
 
 
 
-path1 = 'PrimerasMedidas/'
+raw_path  = 'PrimerasMedidas/'
+
+features_path = 'CSVs/features_'
 
 n_jobs = multiprocessing.cpu_count() - 1
 
-Parallel(n_jobs=n_jobs)(delayed(readSensor)(sensor, path1) for sensor in os.listdir(path1))
+Parallel(n_jobs=n_jobs)(delayed(readSensor)(sensor, raw_path, features_path) for sensor in os.listdir(raw_path))
 
 
 
