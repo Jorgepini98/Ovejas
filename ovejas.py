@@ -139,31 +139,41 @@ def readSensorNum(path):
 
 def getFeatures(data):
 
-    # Accel_x = data.iloc[:,2]
-    # Accel_y = data.iloc[:,3]
-    # Accel_z = data.iloc[:,4]
+    Accel_x = data.iloc[:,2]
+    Accel_y = data.iloc[:,3]
+    Accel_z = data.iloc[:,4]
 
-    # Gyro_x = data.iloc[:,5]
-    # Gyro_y = data.iloc[:,6]
-    # Gyro_z = data.iloc[:,7]
+    Gyro_x = data.iloc[:,5]
+    Gyro_y = data.iloc[:,6]
+    Gyro_z = data.iloc[:,7]
     
-    # Magnet_x = data.iloc[:,8]
-    # Magnet_y = data.iloc[:,9]
-    # Magnet_z = data.iloc[:,10]
+    Magnet_x = data.iloc[:,8]
+    Magnet_y = data.iloc[:,9]
+    Magnet_z = data.iloc[:,10]
 
-    acel = 0
-    gyro = 0
+   
+    SMA = 0
+    SVM = 0
 
     for y in range(data.shape[0]):
 
         if y != 0:
 
-            acel = acel + math.sqrt(pow(int(data.iloc[y,2]),2)) + math.sqrt(pow(int(data.iloc[y,3]),2)) + math.sqrt(pow(int(data.iloc[y,4]),2))
-                    # print(acel)
+            AX = int(Accel_x.iloc[y])
+            AY = int(Accel_y.iloc[y])
+            AZ = int(Accel_z.iloc[y])
 
-    acel = acel/data.shape[0]
+            SMA = abs(AX) + abs(AY) + abs(AZ)
+            SVM = math.sqrt(pow(AX,2) + pow(AY,2) + pow(AZ,2))
 
-    features = pd.DataFrame({"Acel_1": [acel], "Acel_2": [acel]})
+    # print("TOTAL ItER")
+    # print(y)
+
+    SMA = round(SMA/y, 2)
+    SVM = round(SVM/y, 2)
+
+
+    features = pd.DataFrame({"SMA": [SMA], "SVM": [SVM]})
 
     return features
 
@@ -288,7 +298,7 @@ def readSensor(sensor, raw_path, features_path):
 
 
 
-raw_path  = 'PrimerasMedidas/'
+raw_path  = 'Medidas/'
 
 features_path = 'CSVs/features_'
 
