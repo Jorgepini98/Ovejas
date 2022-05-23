@@ -1,0 +1,85 @@
+from numpy import true_divide
+import pandas as pd
+import os
+import glob
+import math
+import multiprocessing
+from joblib import Parallel, delayed
+from scipy import signal
+import matplotlib.pyplot as plt
+import numpy as np
+
+path = "E:/Projectos/ovejas/CSVs/features_5.csv"
+
+df = pd.read_csv(path).iloc[:,1:]
+
+print(df)
+
+previousDay = "00_00_00"
+previousHour = "00"
+
+datePos = 0
+hourPos = 0
+
+Day_SMA = []
+Hour_SMA = []
+
+Day_SVM = []
+Hour_SVM = []
+
+SMA = 0
+SVM = 0
+
+def readDate(date):
+
+    year = date[0] + date[1]
+    month = date[3] + date[4]
+    day = date[6] + date[7]
+
+    return int(year),int(month),int(day)
+
+#sensor_features[["Date","Hour","Minutes","Seconds"]]
+def isNextDay(date1,date2):
+    #format yy_mm_dd
+
+    year1,month1,day1 = readDate(date1)
+    year2,month2,day2 = readDate(date2)
+
+    date1 = datetime.date(year1, month1, day1)
+    date2 = datetime.date(year2, month2, day2)
+    
+
+
+    
+
+
+for i in df.index:
+
+    SMA += df["SMA"][i]
+    SVM += df["SVM"][i]
+
+    if (previousDay != df["Date"][i]) and (i > 0) :
+
+        if isNextDay(previousDay,df["Date"][i]):
+            
+            for days in range(daysApart(previousDay,df["Date"][i])):
+                Day_SMA.append(0)
+                Day_SVM.append(0)
+
+        Day_SMA.append(round(SMA,2))
+        Day_SVM.append(round(SVM,2))
+
+        SMA = 0
+        SVM = 0
+
+    
+
+    previousDay = df["Date"][i]
+    prevoiusHour = df["Hour"][i]
+
+
+print(Day_SMA)
+
+plt.plot(Day_SMA[1:])
+plt.ylabel('Day_SMA')
+plt.show()
