@@ -12,6 +12,7 @@ import time
 
 def isAfter(date1,date2):
     #format date: yy_mm_dd
+    #returns 1 if date1 is after date2, 0 otherwise
     
     true = 0
     
@@ -55,6 +56,7 @@ def isAfter(date1,date2):
     return true
 
 def readDate(path):
+    #converts date from path(220407040422_sen.csv -> example) to format yy_mm_dd
 
     pos = path.find("_")
 
@@ -65,6 +67,7 @@ def readDate(path):
     return year + "_" + month + "_" + day
 
 def posTime(time):
+    #returns positions from time format hour:min:sec
 
     counter = 0
 
@@ -81,24 +84,29 @@ def posTime(time):
     return pos
 
 def readHour(time):
+    #read hour from time format hour:min:sec
 
     pos = posTime(time)
 
     return time[0:(pos[0] - 1)]
 
 def readMinutes(time):
+    #read minutes from time format hour:min:sec
 
     pos = posTime(time)
 
     return time[(pos[0]):(pos[1] - 1)]
 
 def readSeconds(time):
+    #read seconds from time format hour:min:sec
 
     pos = posTime(time)
 
     return time[(pos[1]):]
 
 def isNum(char):
+    #returns 1 if input date corresponds to a number
+
 
     true = 0
 
@@ -114,6 +122,7 @@ def isNum(char):
     return true
 
 def readSensorNum(path):
+    #returns sensor number from path
 
     counter = 0
 
@@ -142,6 +151,8 @@ def readSensorNum(path):
     return sensor
 
 def getFeatures(data):
+    ## given a df such ['HORA','Timestamp','Accel_x','Accel_y','Accel_z','Gyro_x','Gyro_y','Gyro_z','Magnet_x','Magnet_y','Magnet_z']
+    ## computes preprocesing and feature extraction
 
     low = signal.butter(3, 0.5, 'low', output='sos')
     hp = signal.butter(3, 0.5, 'hp', output='sos',fs = 20)
@@ -234,6 +245,7 @@ def getFeatures(data):
     return features
 
 def readDataFrame(path, file, df, lastDay):
+    ##reads dataframe from ".csv" file
 
     count = 0
     
@@ -241,10 +253,10 @@ def readDataFrame(path, file, df, lastDay):
     results = pd.DataFrame()
     data = pd.DataFrame
 
-    Sensor = readSensorNum(path)
-    #Sensor = sensor
+    Sensor = readSensorNum(path) ##gets sensor Num
+    
 
-    for x in range(df.shape[0]):
+    for x in range(df.shape[0]):  ##goes through the index file (df.index)
 
         newMov = df.iloc[x,0]
 
@@ -253,7 +265,7 @@ def readDataFrame(path, file, df, lastDay):
 
         # print(newMov[0:5])
 
-        if newMov[0:5] == 'HORA_':
+        if newMov[0:5] == 'HORA_': #gets next new movement
 
             # print(newMov)
 
@@ -265,31 +277,33 @@ def readDataFrame(path, file, df, lastDay):
             min = readMinutes(time)
             sec = readSeconds(time)
 
-            currentDay = [date,hour,min,sec]
+            if(int(date[:2]) > 20):
 
-            if isAfter(currentDay,lastDay):
+                currentDay = [date,hour,min,sec]
 
-                data = pd.DataFrame(df.loc[(x+1):(x+20)])
+                if isAfter(currentDay,lastDay):
+
+                    data = pd.DataFrame(df.loc[(x+1):(x+200)])
 
 
-                features = getFeatures(data)
+                    features = getFeatures(data)
 
-                data = pd.DataFrame({'Sensor': [Sensor], 'Date': [date], 'Hour': [hour], 'Minutes': [min], "Seconds": [sec]})
+                    data = pd.DataFrame({'Sensor': [Sensor], 'Date': [date], 'Hour': [hour], 'Minutes': [min], "Seconds": [sec]})
 
-                data = pd.concat([data, features], axis=1, join='inner')
+                    data = pd.concat([data, features], axis=1, join='inner')
 
-                # print("Data")
-                # print(data)
+                    # print("Data")
+                    # print(data)
 
-                # type(data)
+                    # type(data)
 
-                if x == 0:
-                    results = pd.DataFrame(data)
+                    if x == 0:
+                        results = pd.DataFrame(data)
+                    else:
+                        results = results.append(data, ignore_index=True)
+                        # print(results)
                 else:
-                    results = results.append(data, ignore_index=True)
-                    # print(results)
-            else:
-                print("Análisis ya realizado")
+                    print("Análisis ya realizado")
 
     # print("resultados")
     # print(results)
