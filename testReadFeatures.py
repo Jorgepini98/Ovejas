@@ -11,7 +11,9 @@ import matplotlib.pyplot as plt
 import numpy as np
 import datetime
 
-
+def daterange(start_date, end_date):
+    for n in range(int ((end_date - start_date).days)):
+        yield start_date + datetime.timedelta(n)
 
 def lastPos(df,pos):
     return pos == len(df)
@@ -37,7 +39,7 @@ def isNextDay(date1,date2):
     date2 = datetime.date(year2, month2, day2)
 
     return (date1 + oneDay) == date2
-    
+
 def isNextHour(hour1,hour2):
 
     hour1 = int(hour1)
@@ -61,7 +63,7 @@ def hoursApart(hour1,hour2):
 
     return max([hour1,hour2]) - min ([hour1,hour2])
 
-def readSensor(sensor, raw_path):
+def readSheep(sheep, raw_path):
 
     previousDay = "00_00_00"
     previousHour = "00"
@@ -85,7 +87,7 @@ def readSensor(sensor, raw_path):
     SMA_hour = 0
     SVM_hour = 0
 
-    path = raw_path + "features_" + str(sensor) + ".csv"
+    path = raw_path + str(sheep) + ".csv"
 
     df = pd.read_csv(path).iloc[:,1:]
 
@@ -118,12 +120,12 @@ def readSensor(sensor, raw_path):
                     for days in range(daysApart(previousDay,df["Date"][i])):
                         if(days != 0):
                             Day_SMA.append(0)
-                            Day_SVM.append(0)  
+                            Day_SVM.append(0)
 
             SMA_day = 0
-            SVM_day = 0  
+            SVM_day = 0
 
-        
+
         if (previousHour != df["Hour"][i]) and (i > 0):
 
             if isNextHour(previousHour,df["Hour"][i]):
@@ -150,45 +152,64 @@ def readSensor(sensor, raw_path):
                             Hour_SVM.append(0)
 
             SMA_hour = 0
-            SVM_hour = 0   
+            SVM_hour = 0
 
 
         previousDay = df["Date"][i]
         previousHour = df["Hour"][i]
 
-    
-
-    df_days = pd.DataFrame({"Date":[DateRecord],"SMA": [Day_SMA], "SVM": [Day_SVM]},columns = ["Date","SMA","SVM"])
-    df_hour = pd.DataFrame({"Date":[HourDateRecord],"Hour":[HourRecord],"SMA": [Hour_SMA], "SVM": [Hour_SVM]})
 
 
-    fig1, (ax1, ax2) = plt.subplots(2, 1, sharex=True)
+    df_days = pd.DataFrame({"Sheep":[sheep],"Date":[DateRecord],"SMA": [Day_SMA], "SVM": [Day_SVM]})
+    df_hour = pd.DataFrame({"Sheep":[sheep],"Date":[HourDateRecord],"Hour":[HourRecord],"SMA": [Hour_SMA], "SVM": [Hour_SVM]})
 
-    ax1.plot(Day_SMA[1:])
-    ax1.set_title('Day_SMA')
+    # box = { "1" : ["4990","5005","5017","5041","5056","5060","5063","5221"],
+    #         "2" : ["5059","4988","5018","5023","5024","5044","5054","5078"],
+    #         "3" : ["4996","4999","5012","5014","5026","5038","5046","4995"]
+    #         }
 
-    ax2.plot(Day_SVM[1:])
-    ax2.set_title('Day_SVM')
+    # box1 = pd.DataFrame({"Box":["1","1","1","1","1","1","1","1"],"Sheep":["4990","5005","5017","5041","5056","5060","5063","5221"]})
+    # box2 = pd.DataFrame({"Box":["2","2","2","2","2","2","2","2"],"Sheep":["5059","4988","5018","5023","5024","5044","5054","5078"]})
+    # box3 = pd.DataFrame({"Box":["3","3","3","3","3","3","3","3"],"Sheep":["4996","4999","5012","5014","5026","5038","5046","4995"]})
 
-    fig2, (ax1, ax2) = plt.subplots(2, 1, sharex=True)
+    # box = pd.concat([box1, box2, box3], axis=0)
 
-    ax1.plot(Hour_SMA[1:])
-    ax1.set_title('Hour_SMA')
 
-    ax2.plot(Hour_SVM[1:])
-    ax2.set_title('Hour_SVM')
-    plt.show()
+    # fig1, (ax1, ax2) = plt.subplots(2, 1, sharex=True)
+
+    # ax1.plot(Day_SMA[1:])
+    # ax1.set_title('Day_SMA')
+
+    # ax2.plot(Day_SVM[1:])
+    # ax2.set_title('Day_SVM')
+
+    # fig2, (ax1, ax2) = plt.subplots(2, 1, sharex=True)
+
+    # ax1.plot(Hour_SMA[1:])
+    # ax1.set_title('Hour_SMA')
+
+    # ax2.plot(Hour_SVM[1:])
+    # ax2.set_title('Hour_SVM')
+    # plt.show()
 
     return df_days,df_hour
 
 
-path = "CSVs/"
+path = "resultado/"
+dfDays = pd.DataFrame()
+dfHours = pd.DataFrame()
 
-sensor = 5
+for sheep in os.listdir(path):
 
-df1,df2 = readSensor(sensor,path)
+    print("Sheep: " + str(sheep[:4]))
+    df1,df2 = readSheep(sheep[:4],path)
 
-print(df1)
+    dfDays = dfDays.append(df1)
+    dfHours = dfHours.append(df2)
+
+
+print(dfDays)
+print(dfHours)
 
 # date1 = "22_01_31"
 # date2 = "22_02_11"

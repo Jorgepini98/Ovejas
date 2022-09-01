@@ -536,32 +536,52 @@ def getData(data):
 
 
     #low pass filter
-    # Accel_x_low = signal.sosfilt(low,modified_Accel_x)[50:250] - np.mean(modified_Accel_x)
-    # Accel_y_low = signal.sosfilt(low,modified_Accel_y)[50:250] - np.mean(modified_Accel_y)
-    # Accel_z_low = signal.sosfilt(low,modified_Accel_z)[50:250] - np.mean(modified_Accel_z)
+    Accel_x_low = signal.sosfilt(low,modified_Accel_x)[50:250] - np.mean(modified_Accel_x)
+    Accel_y_low = signal.sosfilt(low,modified_Accel_y)[50:250] - np.mean(modified_Accel_y)
+    Accel_z_low = signal.sosfilt(low,modified_Accel_z)[50:250] - np.mean(modified_Accel_z)
 
-    # #high pass filter
-    # Accel_x_hp = signal.sosfilt(hp,modified_Accel_x)[50:250]
-    # Accel_y_hp = signal.sosfilt(hp,modified_Accel_y)[50:250]
-    # Accel_z_hp = signal.sosfilt(hp,modified_Accel_z)[50:250]
+    #high pass filter
+    Accel_x_hp = signal.sosfilt(hp,modified_Accel_x)[50:250]
+    Accel_y_hp = signal.sosfilt(hp,modified_Accel_y)[50:250]
+    Accel_z_hp = signal.sosfilt(hp,modified_Accel_z)[50:250]
 
-    # ax3.plot(Accel_x_hp)
-    # ax3.set_title('butter')
+    #low pass filter
+    Gyro_x_low = signal.sosfilt(low,modified_Gyro_x)[50:250] - np.mean(modified_Gyro_x)
+    Gyro_y_low = signal.sosfilt(low,modified_Gyro_y)[50:250] - np.mean(modified_Gyro_y)
+    Gyro_z_low = signal.sosfilt(low,modified_Gyro_z)[50:250] - np.mean(modified_Gyro_z)
 
-    AccelX_int = modified_Accel_x[50:250]
-    AccelY_int = modified_Accel_y[50:250]
-    AccelZ_int = modified_Accel_z[50:250]
+    #high pass filter
+    Gyro_x_hp = signal.sosfilt(hp,modified_Gyro_x)[50:250]
+    Gyro_y_hp = signal.sosfilt(hp,modified_Gyro_y)[50:250]
+    Gyro_z_hp = signal.sosfilt(hp,modified_Gyro_z)[50:250]
 
-    GyroX_int = modified_Gyro_x[50:250]
-    GyroY_int = low,modified_Gyro_y[50:250]
-    GyroZ_int = low,modified_Gyro_z[50:250]
+    #low pass filter
+    Magnet_x_low = signal.sosfilt(low,modified_Magnet_x)[50:250] - np.mean(modified_Magnet_x)
+    Magnet_y_low = signal.sosfilt(low,modified_Magnet_y)[50:250] - np.mean(modified_Magnet_y)
+    Magnet_z_low = signal.sosfilt(low,modified_Magnet_z)[50:250] - np.mean(modified_Magnet_z)
 
-    MagnetX_int = low,modified_Magnet_x[50:250]
-    MagnetY_int = low,modified_Magnet_y[50:250]
-    MagnetZ_int = low,modified_Magnet_z[50:250]
+    #high pass filter
+    Magnet_x_hp = signal.sosfilt(hp,modified_Magnet_x)[50:250]
+    Magnet_y_hp = signal.sosfilt(hp,modified_Magnet_y)[50:250]
+    Magnet_z_hp = signal.sosfilt(hp,modified_Magnet_z)[50:250]
 
 
-    features = features = pd.DataFrame({"Acel_x": [AccelX_int], "Acel_y": [AccelY_int], "Acel_z": [AccelZ_int], "Gyro_x": [GyroX_int], "Gyro_y": [GyroY_int], "Gyro_z": [GyroZ_int], "Magnet_x": [MagnetX_int], "Magnet_y": [MagnetY_int], "Magnet_z": [MagnetZ_int]})
+    # AccelX_int = modified_Accel_x[50:250]
+    # AccelY_int = modified_Accel_y[50:250]
+    # AccelZ_int = modified_Accel_z[50:250]
+
+    # GyroX_int = modified_Gyro_x[50:250]
+    # GyroY_int = modified_Gyro_y[50:250]
+    # GyroZ_int = modified_Gyro_z[50:250]
+
+    # MagnetX_int = modified_Magnet_x[50:250]
+    # MagnetY_int = modified_Magnet_y[50:250]
+    # MagnetZ_int = modified_Magnet_z[50:250]
+
+
+    #features = pd.DataFrame({"Acel_x": AccelX_int, "Acel_y": AccelY_int, "Acel_z": AccelZ_int, "Gyro_x": GyroX_int, "Gyro_y": GyroY_int, "Gyro_z": GyroZ_int, "Magnet_x":MagnetX_int, "Magnet_y": MagnetY_int, "Magnet_z": MagnetZ_int})
+        
+    features = pd.DataFrame({'l_Accel_x':Accel_x_low,'l_Accel_y':Accel_y_low,'l_Accel_z':Accel_z_low,'l_Gyro_x':Gyro_x_low,'l_Gyro_y':Gyro_y_low,'l_Gyro_z':Gyro_z_low,'l_Magnet_x':Magnet_x_low,'l_Magnet_y':Magnet_y_low,'l_Magnet_z':Magnet_z_low,'h_Accel_x':Accel_x_hp,'h_Accel_y':Accel_y_hp,'h_Accel_z':Accel_z_hp,'h_Gyro_x':Gyro_x_hp,'h_Gyro_y':Gyro_y_hp,'h_Gyro_z':Gyro_z_hp,'h_Magnet_x':Magnet_x_hp,'h_Magnet_y':Magnet_y_hp,'h_Magnet_z':Magnet_z_hp})
 
 
     #print(elapsed)
@@ -649,7 +669,7 @@ def readSensor(sensor, raw_path, features_path):
 
     #checks whether exist or not already a feature file for the sensor
     try:
-        sensor_features = pd.read_csv(features_path + sensor + ".csv")
+        sensor_features = pd.read_csv(features_path + sensor + ".csv",dtype = "string")
         sensor_features = sensor_features.iloc[:, 1:]
         existFile = 1
         lastDay = sensor_features[["Date","Hour","Minutes","Seconds"]]
@@ -667,7 +687,7 @@ def readSensor(sensor, raw_path, features_path):
 
         if file.endswith(".csv"):
 
-            df = pd.read_csv(path2 + file, sep=';', names = ['HORA','Timestamp','Accel_x','Accel_y','Accel_z','Gyro_x','Gyro_y','Gyro_z','Magnet_x','Magnet_y','Magnet_z'])
+            df = pd.read_csv(path2 + file, sep=';', names = ['HORA','Timestamp','Accel_x','Accel_y','Accel_z','Gyro_x','Gyro_y','Gyro_z','Magnet_x','Magnet_y','Magnet_z'],dtype = "string")
 
             if content.empty :
 
@@ -681,7 +701,7 @@ def readSensor(sensor, raw_path, features_path):
 
             print("Sensor: "+sensor+" file: " + file)
 
-    # print(content)
+    print('#################################### ' + 'End of sensor: ' + sensor)
     if existFile == 1:
         sensor_features = sensor_features.append(content)
         sensor_features.to_csv(features_path + str(sensor) + ".csv")
@@ -692,7 +712,7 @@ def readSensor(sensor, raw_path, features_path):
 start = time.time()
 
 raw_path  = 'Medidas/'
-features_path = 'CVSs/'
+features_path = 'CSVs/'
 
 n_jobs = multiprocessing.cpu_count() - 1
 
