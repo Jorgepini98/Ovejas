@@ -10,6 +10,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import time
 import tsfresh
+from scipy.fft import fft
 
 def isAfter(date1,date2):
     #format date: [yy_mm_dd,hh,mm,ss]
@@ -176,47 +177,80 @@ def getFeatures(data):
 
     #print(Accel_x)
 
-    # Gyro_x = data.iloc[:,5]
-    # Gyro_y = data.iloc[:,6]
-    # Gyro_z = data.iloc[:,7]
+    Gyro_x = data.iloc[:,5]
+    Gyro_y = data.iloc[:,6]
+    Gyro_z = data.iloc[:,7]
 
-    # Magnet_x = data.iloc[:,8]
-    # Magnet_y = data.iloc[:,9]
-    # Magnet_z = data.iloc[:,10]
+    Magnet_x = data.iloc[:,8]
+    Magnet_y = data.iloc[:,9]
+    Magnet_z = data.iloc[:,10]
 
     AccelX_int = []
     AccelY_int = []
     AccelZ_int = []
+
+    GyroX_int = []
+    GyroY_int = []
+    GyroZ_int = []
+
+    MagnetX_int = []
+    MagnetY_int = []
+    MagnetZ_int = []
 
     # in order to avoid spike at filtering stage
     modified_Accel_x=[]
     modified_Accel_y=[]
     modified_Accel_z=[]
 
-    total_Accel = []
+    modified_Gyro_x=[]
+    modified_Gyro_y=[]
+    modified_Gyro_z=[]
 
-   
-    SMA = 0
-    SVM = 0
+    modified_Magnet_x=[]
+    modified_Magnet_y=[]
+    modified_Magnet_z=[]
 
     for y in range(data.shape[0]):
 
         if y != 0:
 
-            AccelX_int.append(int(Accel_x.iloc[y]))
-            AccelY_int.append(int(Accel_y.iloc[y]))
-            AccelZ_int.append(int(Accel_z.iloc[y]))
+            AccelX_int.append(int((Accel_x.iloc[y])))
+            AccelY_int.append(int((Accel_y.iloc[y])))
+            AccelZ_int.append(int((Accel_z.iloc[y])))
 
-            
-    # fig, (ax1, ax2, ax3) = plt.subplots(3, 1, sharex=True)
+            GyroX_int.append(int((Gyro_x.iloc[y])))
+            GyroY_int.append(int((Gyro_y.iloc[y])))
+            GyroZ_int.append(int((Gyro_z.iloc[y])))
 
-    # ax1.plot(AccelX_int)
-    # ax1.set_title('before')
+            MagnetX_int.append(int((Magnet_x.iloc[y])))
+            MagnetY_int.append(int((Magnet_y.iloc[y])))
+            MagnetZ_int.append(int((Magnet_z.iloc[y])))
+
+    #rawData
+    rawAccel_x = (AccelX_int)
+    rawAccel_y = (AccelY_int)
+    rawAccel_z = (AccelZ_int)
+
+    rawGyro_x = (GyroX_int)
+    rawGyro_y = (GyroY_int)
+    rawGyro_z = (GyroZ_int)
+
+    rawMagnet_x = (MagnetX_int)
+    rawMagnet_y = (MagnetY_int)
+    rawMagnet_z = (MagnetZ_int)
 
     # MEdian filter
     Accel_x = signal.medfilt(AccelX_int)
     Accel_y = signal.medfilt(AccelY_int)
     Accel_z = signal.medfilt(AccelZ_int)
+
+    Gyro_x = signal.medfilt(GyroX_int)
+    Gyro_y = signal.medfilt(GyroY_int)
+    Gyro_z = signal.medfilt(GyroZ_int)
+
+    Magnet_x = signal.medfilt(MagnetX_int)
+    Magnet_y = signal.medfilt(MagnetY_int)
+    Magnet_z = signal.medfilt(MagnetZ_int)
 
     # ax2.plot(Accel_x)
     # ax2.set_title('median')
@@ -228,21 +262,79 @@ def getFeatures(data):
         modified_Accel_y.append(Accel_y[0])
         modified_Accel_z.append(Accel_z[0])
 
+        modified_Gyro_x.append(Gyro_x[0])
+        modified_Gyro_y.append(Gyro_y[0])
+        modified_Gyro_z.append(Gyro_z[0])
+
+        modified_Magnet_x.append(Magnet_x[0])
+        modified_Magnet_y.append(Magnet_y[0])
+        modified_Magnet_z.append(Magnet_z[0])
+
 
     modified_Accel_x = np.append(modified_Accel_x,Accel_x)
     modified_Accel_y = np.append(modified_Accel_y,Accel_y)
     modified_Accel_z = np.append(modified_Accel_z,Accel_z)
 
+    modified_Gyro_x = np.append(modified_Gyro_x,Gyro_x)
+    modified_Gyro_y = np.append(modified_Gyro_y,Gyro_y)
+    modified_Gyro_z = np.append(modified_Gyro_z,Gyro_z)
+
+    modified_Magnet_x = np.append(modified_Magnet_x,Magnet_x)
+    modified_Magnet_y = np.append(modified_Magnet_y,Magnet_y)
+    modified_Magnet_z = np.append(modified_Magnet_z,Magnet_z)
+
+    # plt.figure()
 
     #low pass filter
-    Accel_x_low = signal.sosfilt(low,modified_Accel_x)[50:250] - np.mean(modified_Accel_x)
-    Accel_y_low = signal.sosfilt(low,modified_Accel_y)[50:250] - np.mean(modified_Accel_y)
-    Accel_z_low = signal.sosfilt(low,modified_Accel_z)[50:250] - np.mean(modified_Accel_z)
+    # Accel_x_low = signal.sosfilt(low,modified_Accel_x)[50:250] - np.mean(modified_Accel_x)
+    # Accel_y_low = signal.sosfilt(low,modified_Accel_y)[50:250] - np.mean(modified_Accel_y)
+    # Accel_z_low = signal.sosfilt(low,modified_Accel_z)[50:250] - np.mean(modified_Accel_z)
 
     #high pass filter
     Accel_x_hp = signal.sosfilt(hp,modified_Accel_x)[50:250]
     Accel_y_hp = signal.sosfilt(hp,modified_Accel_y)[50:250]
     Accel_z_hp = signal.sosfilt(hp,modified_Accel_z)[50:250]
+
+    # plt.subplot(3,1,1)
+    # plt.plot(Accel_x_hp)
+    # plt.plot(Accel_y_hp)
+    # plt.plot(Accel_z_hp)
+    # plt.title('Accel')
+    # plt.grid(True)
+
+    #low pass filter
+    # Gyro_x_low = signal.sosfilt(low,modified_Gyro_x)[50:250] - np.mean(modified_Gyro_x)
+    # Gyro_y_low = signal.sosfilt(low,modified_Gyro_y)[50:250] - np.mean(modified_Gyro_y)
+    # Gyro_z_low = signal.sosfilt(low,modified_Gyro_z)[50:250] - np.mean(modified_Gyro_z)
+
+    #high pass filter
+    Gyro_x_hp = signal.sosfilt(hp,modified_Gyro_x)[50:250]
+    Gyro_y_hp = signal.sosfilt(hp,modified_Gyro_y)[50:250]
+    Gyro_z_hp = signal.sosfilt(hp,modified_Gyro_z)[50:250]
+
+    # plt.subplot(3,1,2)
+    # plt.plot(Gyro_x_hp)
+    # plt.plot(Gyro_y_hp)
+    # plt.plot(Gyro_z_hp)
+    # plt.title('Gyro')
+    # plt.grid(True)
+
+    #low pass filter
+    Magnet_x_low = signal.sosfilt(low,modified_Magnet_x)[50:250] - np.mean(modified_Magnet_x)
+    Magnet_y_low = signal.sosfilt(low,modified_Magnet_y)[50:250] - np.mean(modified_Magnet_y)
+    Magnet_z_low = signal.sosfilt(low,modified_Magnet_z)[50:250] - np.mean(modified_Magnet_z)
+
+    # plt.subplot(3,1,3)
+    # plt.plot(Magnet_x_low)
+    # plt.plot(Magnet_y_low)
+    # plt.plot(Magnet_z_low)
+    # plt.title('Magnet')
+    # plt.grid(True)
+
+    #high pass filter
+    # Magnet_x_hp = signal.sosfilt(hp,modified_Magnet_x)[50:250]
+    # Magnet_y_hp = signal.sosfilt(hp,modified_Magnet_y)[50:250]
+    # Magnet_z_hp = signal.sosfilt(hp,modified_Magnet_z)[50:250]
 
     # ax3.plot(Accel_x_hp)
     # ax3.set_title('butter')
@@ -251,6 +343,11 @@ def getFeatures(data):
     y = 0
 
     t = time.time()
+
+    SMA = 0
+    SVM = 0
+
+    total_Accel = []
 
     for y in range(Accel_x_hp.shape[0]):
 
@@ -266,168 +363,381 @@ def getFeatures(data):
 
     a_maximum = tsfresh.feature_extraction.feature_calculators.absolute_maximum(Accel_x_hp)
 
-    a_entropy = tsfresh.feature_extraction.feature_calculators.approximate_entropy(total_Accel,10,3)
+    a_entropy = tsfresh.feature_extraction.feature_calculators.approximate_entropy(total_Accel,25,3)
 
-    a_x_autocorrelation = tsfresh.feature_extraction.feature_calculators.autocorrelation(Accel_x_hp,2) ##lag
-    a_y_autocorrelation = tsfresh.feature_extraction.feature_calculators.autocorrelation(Accel_y_hp,2)
-    a_z_autocorrelation = tsfresh.feature_extraction.feature_calculators.autocorrelation(Accel_z_hp,2)
-    a_autocorrelation = tsfresh.feature_extraction.feature_calculators.autocorrelation(total_Accel,2)
+    a_sum_changes = tsfresh.feature_extraction.feature_calculators.absolute_sum_of_changes(total_Accel)
 
-    uno = {"a_x_autocorrelation":[a_x_autocorrelation],"a_y_autocorrelation":[a_y_autocorrelation],"a_z_autocorrelation":[a_z_autocorrelation],"a_autocorrelation":[a_autocorrelation]}
+    #a_agg_autocorrelation = tsfresh.feature_extraction.feature_calculators.agg_autocorrelation(total_Accel,25)
+
+    a_binned_entropy = tsfresh.feature_extraction.feature_calculators.binned_entropy(total_Accel,25)
+
+    a_countsAboveMean = tsfresh.feature_extraction.feature_calculators.count_above_mean(total_Accel)
+
+    a_countBelowMean = tsfresh.feature_extraction.feature_calculators.count_below_mean(total_Accel)
+
+    #a_cwt_coefficients = tsfresh.feature_extraction.feature_calculators.cwt_coefficients(total_Accel, {"widths":(2, 5, 10, 20), "coeff": 14, "w": 5})
+
+    a_fft = fft(total_Accel)
+
+    a_previos = {"a_abs_energy":[a_abs_energy],"a_maximum":[a_maximum],"a_entropy":[a_entropy],"a_sum_changes":[a_sum_changes],"a_binned_entropy":[a_binned_entropy],"a_countsAboveMean":[a_countsAboveMean],"a_countBelowMean":[a_countBelowMean]} #,"a_fft":[a_fft]
+
+    a_x_autocorrelation = tsfresh.feature_extraction.feature_calculators.autocorrelation(Accel_x_hp,25) ##lag
+    a_y_autocorrelation = tsfresh.feature_extraction.feature_calculators.autocorrelation(Accel_y_hp,25)
+    a_z_autocorrelation = tsfresh.feature_extraction.feature_calculators.autocorrelation(Accel_z_hp,25)
+    a_autocorrelation = tsfresh.feature_extraction.feature_calculators.autocorrelation(total_Accel,25)
+
+    a_uno = {"a_x_autocorrelation":[a_x_autocorrelation],"a_y_autocorrelation":[a_y_autocorrelation],"a_z_autocorrelation":[a_z_autocorrelation],"a_autocorrelation":[a_autocorrelation]} 
 
     a_x_benfordCorrelation = tsfresh.feature_extraction.feature_calculators.benford_correlation(Accel_x_hp)
     a_y_benfordCorrelation = tsfresh.feature_extraction.feature_calculators.benford_correlation(Accel_y_hp)
     a_z_benfordCorrelation = tsfresh.feature_extraction.feature_calculators.benford_correlation(Accel_z_hp)
     a_benfordCorrelation = tsfresh.feature_extraction.feature_calculators.benford_correlation(total_Accel)
 
-    dos = {"a_x_benfordCorrelation":[a_x_benfordCorrelation],"a_y_benfordCorrelation":[a_y_benfordCorrelation],"a_z_benfordCorrelation":[a_z_benfordCorrelation],"a_benfordCorrelation":[a_benfordCorrelation]}
+    a_dos = {"a_x_benfordCorrelation":[a_x_benfordCorrelation],"a_y_benfordCorrelation":[a_y_benfordCorrelation],"a_z_benfordCorrelation":[a_z_benfordCorrelation],"a_benfordCorrelation":[a_benfordCorrelation]} #
 
-    a_x_c3 = tsfresh.feature_extraction.feature_calculators.c3(Accel_x_hp,10)
-    a_y_c3 = tsfresh.feature_extraction.feature_calculators.c3(Accel_y_hp,10)
-    a_z_c3 = tsfresh.feature_extraction.feature_calculators.c3(Accel_z_hp,10)
-    a_c3 = tsfresh.feature_extraction.feature_calculators.c3(total_Accel,10)
+    a_x_c3 = tsfresh.feature_extraction.feature_calculators.c3(Accel_x_hp,5)
+    a_y_c3 = tsfresh.feature_extraction.feature_calculators.c3(Accel_y_hp,5)
+    a_z_c3 = tsfresh.feature_extraction.feature_calculators.c3(Accel_z_hp,5)
+    a_c3 = tsfresh.feature_extraction.feature_calculators.c3(total_Accel,5)
 
-    tres = {"a_x_c3":[a_x_c3],"a_y_c3":[a_y_c3],"a_z_c3":[a_z_c3],"a_c3":[a_c3]}
+    a_tres = {"a_x_c3":[a_x_c3],"a_y_c3":[a_y_c3],"a_z_c3":[a_z_c3],"a_c3":[a_c3]} #
 
     a_x_cid_ce = tsfresh.feature_extraction.feature_calculators.cid_ce(Accel_x_hp,False)
     a_y_cid_ce = tsfresh.feature_extraction.feature_calculators.cid_ce(Accel_y_hp,False)
     a_z_cid_ce = tsfresh.feature_extraction.feature_calculators.cid_ce(Accel_z_hp,False)
     a_cid_ce = tsfresh.feature_extraction.feature_calculators.cid_ce(total_Accel,False)
 
-    cuatro = {"a_x_cid_ce":[a_x_cid_ce],"a_y_cid_ce":[a_y_cid_ce],"a_z_cid_ce":[a_z_cid_ce],"a_cid_ce":[a_cid_ce]}
-
-    ##cwt_coeficients
-
-    # s = {"aggtype": {"centroid":None}}
-
-    # x_ftt_centroid = tsfresh.feature_extraction.feature_calculators.fft_aggregated(Accel_x_hp, ["centroid", "variance", "skew", "kurtosis"])
-    # y_ftt_centroid = tsfresh.feature_extraction.feature_calculators.fft_aggregated(Accel_y_hp,"centroid")
-    # z_ftt_centroid = tsfresh.feature_extraction.feature_calculators.fft_aggregated(Accel_z_hp,"centroid")
-    # ftt_centroid = tsfresh.feature_extraction.feature_calculators.fft_aggregated(total_Accel,"centroid")
-
-    # x_ftt_variance = tsfresh.feature_extraction.feature_calculators.fft_aggregated(Accel_x_hp,"variance")
-    # y_ftt_variance = tsfresh.feature_extraction.feature_calculators.fft_aggregated(Accel_y_hp,"variance")
-    # z_ftt_variance = tsfresh.feature_extraction.feature_calculators.fft_aggregated(Accel_z_hp,"variance")
-    # ftt_variance = tsfresh.feature_extraction.feature_calculators.fft_aggregated(total_Accel,"variance")
-
-    # x_ftt_skew = tsfresh.feature_extraction.feature_calculators.fft_aggregated(Accel_x_hp,"skew")
-    # y_ftt_skew = tsfresh.feature_extraction.feature_calculators.fft_aggregated(Accel_y_hp,"skew")
-    # z_ftt_skew = tsfresh.feature_extraction.feature_calculators.fft_aggregated(Accel_z_hp,"skew")
-    # ftt_skew = tsfresh.feature_extraction.feature_calculators.fft_aggregated(total_Accel,"skew")
-
-    # x_ftt_kurtosis = tsfresh.feature_extraction.feature_calculators.fft_aggregated(Accel_x_hp,"kurtosis")
-    # y_ftt_kurtosis = tsfresh.feature_extraction.feature_calculators.fft_aggregated(Accel_y_hp,"kurtosis")
-    # z_ftt_kurtosis = tsfresh.feature_extraction.feature_calculators.fft_aggregated(Accel_z_hp,"kurtosis")
-    # ftt_kurtosis = tsfresh.feature_extraction.feature_calculators.fft_aggregated(total_Accel,"kurtosis")
+    a_cuatro = {"a_x_cid_ce":[a_x_cid_ce],"a_y_cid_ce":[a_y_cid_ce],"a_z_cid_ce":[a_z_cid_ce],"a_cid_ce":[a_cid_ce]} #
 
     a_x_fourier_entropy = tsfresh.feature_extraction.feature_calculators.fourier_entropy(Accel_x_hp,10) ##bins
     a_y_fourier_entropy = tsfresh.feature_extraction.feature_calculators.fourier_entropy(Accel_y_hp,10)
     a_z_fourier_entropy = tsfresh.feature_extraction.feature_calculators.fourier_entropy(Accel_z_hp,10)
     a_fourier_entropy = tsfresh.feature_extraction.feature_calculators.fourier_entropy(total_Accel,10)
 
-    cinco = {"a_x_fourier_entropy":[a_x_fourier_entropy],"a_y_fourier_entropy":[a_y_fourier_entropy],"a_z_fourier_entropy":[a_z_fourier_entropy],"a_fourier_entropy":[a_fourier_entropy]}
+    a_cinco = {"a_x_fourier_entropy":[a_x_fourier_entropy],"a_y_fourier_entropy":[a_y_fourier_entropy],"a_z_fourier_entropy":[a_z_fourier_entropy],"a_fourier_entropy":[a_fourier_entropy]} #
 
     a_x_kurtosis = tsfresh.feature_extraction.feature_calculators.kurtosis(Accel_x_hp)
     a_y_kurtosis = tsfresh.feature_extraction.feature_calculators.kurtosis(Accel_y_hp)
     a_z_kurtosis = tsfresh.feature_extraction.feature_calculators.kurtosis(Accel_z_hp)
     a_kurtosis = tsfresh.feature_extraction.feature_calculators.kurtosis(total_Accel)
 
-    seis = {"a_x_kurtosis":[a_x_kurtosis],"a_y_kurtosis":[a_y_kurtosis],"a_z_kurtosis":[a_z_kurtosis],"a_kurtosis":[a_kurtosis]}
+    a_seis = {"a_x_kurtosis":[a_x_kurtosis],"a_y_kurtosis":[a_y_kurtosis],"a_z_kurtosis":[a_z_kurtosis],"a_kurtosis":[a_kurtosis]} #
 
     a_x_skewness = tsfresh.feature_extraction.feature_calculators.skewness(Accel_x_hp)
     a_y_skewness = tsfresh.feature_extraction.feature_calculators.skewness(Accel_y_hp)
     a_z_skewness = tsfresh.feature_extraction.feature_calculators.skewness(Accel_z_hp)
     a_skewness = tsfresh.feature_extraction.feature_calculators.skewness(total_Accel)
 
-    siete = {"a_x_skewness":[a_x_skewness],"a_y_skewness":[a_y_skewness],"a_z_skewness":[a_z_skewness],"a_skewness":[a_skewness]}
+    a_siete = {"a_x_skewness":[a_x_skewness],"a_y_skewness":[a_y_skewness],"a_z_skewness":[a_z_skewness],"a_skewness":[a_skewness]} #
 
     a_x_last_location_of_maximum = tsfresh.feature_extraction.feature_calculators.last_location_of_maximum(Accel_x_hp)
     a_y_last_location_of_maximum = tsfresh.feature_extraction.feature_calculators.last_location_of_maximum(Accel_y_hp)
     a_z_last_location_of_maximum = tsfresh.feature_extraction.feature_calculators.last_location_of_maximum(Accel_z_hp)
     a_last_location_of_maximum = tsfresh.feature_extraction.feature_calculators.last_location_of_maximum(total_Accel)
 
-    ocho = {"a_x_last_location_of_maximum":[a_x_last_location_of_maximum],"a_y_last_location_of_maximum":[a_y_last_location_of_maximum],"a_z_last_location_of_maximum":[a_z_last_location_of_maximum],"a_last_location_of_maximum":[a_last_location_of_maximum]}
+    a_ocho = {"a_x_last_location_of_maximum":[a_x_last_location_of_maximum],"a_y_last_location_of_maximum":[a_y_last_location_of_maximum],"a_z_last_location_of_maximum":[a_z_last_location_of_maximum],"a_last_location_of_maximum":[a_last_location_of_maximum]} #
 
     a_x_last_location_of_minimum = tsfresh.feature_extraction.feature_calculators.last_location_of_minimum(Accel_x_hp)
     a_y_last_location_of_minimum = tsfresh.feature_extraction.feature_calculators.last_location_of_minimum(Accel_y_hp)
     a_z_last_location_of_minimum = tsfresh.feature_extraction.feature_calculators.last_location_of_minimum(Accel_z_hp)
     a_last_location_of_minimum = tsfresh.feature_extraction.feature_calculators.last_location_of_minimum(total_Accel)
 
-    nueve = {"a_x_last_location_of_minimum":[a_x_last_location_of_minimum],"a_y_last_location_of_minimum":[a_y_last_location_of_minimum],"a_z_last_location_of_minimum":[a_z_last_location_of_minimum],"a_last_location_of_minimum":[a_last_location_of_minimum]}
+    a_nueve = {"a_x_last_location_of_minimum":[a_x_last_location_of_minimum],"a_y_last_location_of_minimum":[a_y_last_location_of_minimum],"a_z_last_location_of_minimum":[a_z_last_location_of_minimum],"a_last_location_of_minimum":[a_last_location_of_minimum]} #
 
     a_x_mean = tsfresh.feature_extraction.feature_calculators.mean(Accel_x_hp)
     a_y_mean = tsfresh.feature_extraction.feature_calculators.mean(Accel_y_hp)
     a_z_mean = tsfresh.feature_extraction.feature_calculators.mean(Accel_z_hp)
     a_mean = tsfresh.feature_extraction.feature_calculators.mean(total_Accel)
 
-    diez = {"a_x_mean":[a_x_mean],"a_y_mean":[a_y_mean],"a_z_mean":[a_z_mean],"a_mean":[a_mean]}
+    a_diez = {"a_x_mean":[a_x_mean],"a_y_mean":[a_y_mean],"a_z_mean":[a_z_mean],"a_mean":[a_mean]} #
 
     a_x_mean_abs_change = tsfresh.feature_extraction.feature_calculators.mean_abs_change(Accel_x_hp)
     a_y_mean_abs_change = tsfresh.feature_extraction.feature_calculators.mean_abs_change(Accel_y_hp)
     a_z_mean_abs_change = tsfresh.feature_extraction.feature_calculators.mean_abs_change(Accel_z_hp)
     a_mean_abs_change = tsfresh.feature_extraction.feature_calculators.mean_abs_change(total_Accel)
 
-    once = {"a_x_mean_abs_change":[a_x_mean_abs_change],"a_y_mean_abs_change":[a_y_mean_abs_change],"a_z_mean_abs_change":[a_z_mean_abs_change],"a_mean_abs_change":[a_mean_abs_change]}
+    a_once = {"a_x_mean_abs_change":[a_x_mean_abs_change],"a_y_mean_abs_change":[a_y_mean_abs_change],"a_z_mean_abs_change":[a_z_mean_abs_change],"a_mean_abs_change":[a_mean_abs_change]} #
 
     a_x_median = tsfresh.feature_extraction.feature_calculators.median(Accel_x_hp)
     a_y_median = tsfresh.feature_extraction.feature_calculators.median(Accel_y_hp)
     a_z_median = tsfresh.feature_extraction.feature_calculators.median(Accel_z_hp)
     a_median = tsfresh.feature_extraction.feature_calculators.median(total_Accel)
 
-    doce = {"a_x_median":[a_x_median],"a_y_median":[a_y_median],"a_z_median":[a_z_median],"a_median":[a_median]}
+    a_doce = {"a_x_median":[a_x_median],"a_y_median":[a_y_median],"a_z_median":[a_z_median],"a_median":[a_median]} #
 
     a_x_minimum = tsfresh.feature_extraction.feature_calculators.minimum(Accel_x_hp)
     a_y_minimum = tsfresh.feature_extraction.feature_calculators.minimum(Accel_y_hp)
     a_z_minimum = tsfresh.feature_extraction.feature_calculators.minimum(Accel_z_hp)
     a_minimum = tsfresh.feature_extraction.feature_calculators.minimum(total_Accel)
 
-    trece = {"a_x_minimum":[a_x_minimum],"a_y_minimum":[a_y_minimum],"a_z_minimum":[a_z_minimum],"a_minimum":[a_minimum]}
+    a_trece = {"a_x_minimum":[a_x_minimum],"a_y_minimum":[a_y_minimum],"a_z_minimum":[a_z_minimum],"a_minimum":[a_minimum]} #
 
     a_x_number_cwt_peaks= tsfresh.feature_extraction.feature_calculators.number_cwt_peaks(Accel_x_hp,10)
     a_y_number_cwt_peaks= tsfresh.feature_extraction.feature_calculators.number_cwt_peaks(Accel_y_hp,10)
     a_z_number_cwt_peaks = tsfresh.feature_extraction.feature_calculators.number_cwt_peaks(Accel_z_hp,10)
     a_number_cwt_peaks = tsfresh.feature_extraction.feature_calculators.number_cwt_peaks(total_Accel,10)
 
-    catorce = {"a_x_number_cwt_peaks":[a_x_number_cwt_peaks],"a_y_number_cwt_peaks":[a_y_number_cwt_peaks],"a_z_number_cwt_peaks":[a_z_number_cwt_peaks],"a_number_cwt_peaks":[a_number_cwt_peaks]}
+    a_catorce = {"a_x_number_cwt_peaks":[a_x_number_cwt_peaks],"a_y_number_cwt_peaks":[a_y_number_cwt_peaks],"a_z_number_cwt_peaks":[a_z_number_cwt_peaks],"a_number_cwt_peaks":[a_number_cwt_peaks]} #
 
-    a_x_number_peaks= tsfresh.feature_extraction.feature_calculators.number_peaks(Accel_x_hp,int(SMA/5))
-    a_y_number_peaks= tsfresh.feature_extraction.feature_calculators.number_peaks(Accel_y_hp,int(SMA/4))
-    a_z_number_peaks = tsfresh.feature_extraction.feature_calculators.number_peaks(Accel_z_hp,int(SMA/4))
-    a_number_peaks = tsfresh.feature_extraction.feature_calculators.number_peaks(total_Accel,int(SMA))
+    # a_x_number_peaks= tsfresh.feature_extraction.feature_calculators.number_peaks(Accel_x_hp,round(a_x_mean))
+    # a_y_number_peaks= tsfresh.feature_extraction.feature_calculators.number_peaks(Accel_y_hp,round(a_y_mean))
+    # a_z_number_peaks = tsfresh.feature_extraction.feature_calculators.number_peaks(Accel_z_hp,round(a_z_mean))
+    # a_number_peaks = tsfresh.feature_extraction.feature_calculators.number_peaks(total_Accel,round(a_mean))
 
-    quince = {"a_x_number_peaks":[a_x_number_peaks],"a_y_number_peaks":[a_y_number_peaks],"a_z_number_peaks":[a_z_number_peaks],"a_number_peaks":[a_number_peaks]}
+    fourier = np.abs(np.fft.fft(total_Accel))
 
-    a_x_quantile = tsfresh.feature_extraction.feature_calculators.quantile(Accel_x_hp,0.25)
-    a_y_quantile = tsfresh.feature_extraction.feature_calculators.quantile(Accel_y_hp,0.25)
-    a_z_quantile = tsfresh.feature_extraction.feature_calculators.quantile(Accel_z_hp,0.25)
-    a_quantile = tsfresh.feature_extraction.feature_calculators.quantile(total_Accel,0.25)
+    a_quince = {}
 
-    dieciseis = {"a_x_quantile":[a_x_quantile],"a_y_quantile":[a_y_quantile],"a_z_quantile":[a_z_quantile],"a_quantile":[a_quantile]}
+    for x in range(5):
+        maxValue = np.max(fourier)
+        pos = np.where(fourier == maxValue)[0]
+        fourier[pos] = 0 
+        a_quince["a_freq"+str(x)]=pos[0]
+        
+    # print(a_quince)
+    # input("Press Enter to continue...")
+
+    # a_quince = {"a_x_number_peaks":[a_x_number_peaks],"a_y_number_peaks":[a_y_number_peaks],"a_z_number_peaks":[a_z_number_peaks],"a_number_peaks":[a_number_peaks]} #
+
+    a_x_quantile_25 = tsfresh.feature_extraction.feature_calculators.quantile(Accel_x_hp,0.25)
+    a_y_quantile_25 = tsfresh.feature_extraction.feature_calculators.quantile(Accel_y_hp,0.25)
+    a_z_quantile_25 = tsfresh.feature_extraction.feature_calculators.quantile(Accel_z_hp,0.25)
+    a_quantile_25 = tsfresh.feature_extraction.feature_calculators.quantile(total_Accel,0.25)
+
+    a_x_quantile_75 = tsfresh.feature_extraction.feature_calculators.quantile(Accel_x_hp,0.75)
+    a_y_quantile_75 = tsfresh.feature_extraction.feature_calculators.quantile(Accel_y_hp,0.75)
+    a_z_quantile_75 = tsfresh.feature_extraction.feature_calculators.quantile(Accel_z_hp,0.75)
+    a_quantile_75 = tsfresh.feature_extraction.feature_calculators.quantile(total_Accel,0.75)
+
+    a_dieciseis = {"a_x_quantile_25":[a_x_quantile_25],"a_y_quantile_25":[a_y_quantile_25],"a_z_quantile_25":[a_z_quantile_25],"a_quantile_25":[a_quantile_25],"a_x_quantile_75":[a_x_quantile_75],"a_y_quantile_75":[a_y_quantile_75],"a_z_quantile_75":[a_z_quantile_75],"a_quantile_75":[a_quantile_75]} #
 
     a_x_root_mean_square= tsfresh.feature_extraction.feature_calculators.root_mean_square(Accel_x_hp)
     a_y_root_mean_square= tsfresh.feature_extraction.feature_calculators.root_mean_square(Accel_y_hp)
     a_z_root_mean_square = tsfresh.feature_extraction.feature_calculators.root_mean_square(Accel_z_hp)
     a_root_mean_square = tsfresh.feature_extraction.feature_calculators.root_mean_square(total_Accel)
 
-    dieciseis = {"a_x_root_mean_square":[a_x_root_mean_square],"a_y_root_mean_square":[a_y_root_mean_square],"a_z_root_mean_square":[a_z_root_mean_square],"a_root_mean_square":[a_root_mean_square]}
+    a_diecisiete = {"a_x_root_mean_square":[a_x_root_mean_square],"a_y_root_mean_square":[a_y_root_mean_square],"a_z_root_mean_square":[a_z_root_mean_square],"a_root_mean_square":[a_root_mean_square]} #
 
     a_x_standard_deviation= tsfresh.feature_extraction.feature_calculators.standard_deviation(Accel_x_hp)
     a_y_standard_deviation= tsfresh.feature_extraction.feature_calculators.standard_deviation(Accel_y_hp)
     a_z_standard_deviation = tsfresh.feature_extraction.feature_calculators.standard_deviation(Accel_z_hp)
     a_standard_deviation = tsfresh.feature_extraction.feature_calculators.standard_deviation(total_Accel)
 
-    diecisiete = {"a_x_standard_deviation":[a_x_standard_deviation],"a_y_standard_deviation":[a_y_standard_deviation],"a_z_standard_deviation":[a_z_standard_deviation],"a_standard_deviation":[a_standard_deviation]}
+    a_dieciocho = {"a_x_standard_deviation":[a_x_standard_deviation],"a_y_standard_deviation":[a_y_standard_deviation],"a_z_standard_deviation":[a_z_standard_deviation],"a_standard_deviation":[a_standard_deviation]} #
 
     a_x_variance= tsfresh.feature_extraction.feature_calculators.variance(Accel_x_hp)
     a_y_variance= tsfresh.feature_extraction.feature_calculators.variance(Accel_y_hp)
     a_z_variance = tsfresh.feature_extraction.feature_calculators.variance(Accel_z_hp)
     a_variance = tsfresh.feature_extraction.feature_calculators.variance(total_Accel)
 
-    diecisiete = {"a_x_variance":[a_x_variance],"a_y_variance":[a_y_variance],"a_z_variance":[a_z_variance],"a_variance":[a_variance]}
+    a_diecinueve = {"a_x_variance":[a_x_variance],"a_y_variance":[a_y_variance],"a_z_variance":[a_z_variance],"a_variance":[a_variance]} #
 
-    features = {"SMA": [SMA], "SVM": [SVM], "Energy": [a_abs_energy], "Maximum":[a_maximum], "Entropy":[a_entropy]}
+    # g_x_fft = fft(Gyro_x_hp)
+    # g_y_fft = fft(Gyro_y_hp)
+    # g_z_fft = fft(Gyro_z_hp)
 
-    features = pd.DataFrame({**features, **uno, **dos, **tres, **cuatro, **cinco, **seis, **siete, **ocho, **nueve, **diez, **once, **doce, **trece, **catorce, **quince, **dieciseis, **diecisiete})
+    # g_uno = {"g_x_fft":[g_x_fft],"g_y_fft":[g_y_fft],"g_z_fft":[g_z_fft]}
+
+    #g_x_autocorrelation = tsfresh.feature_extraction.feature_calculators.autocorrelation(Gyro_x_hp,25)
+    g_y_autocorrelation = tsfresh.feature_extraction.feature_calculators.autocorrelation(Gyro_y_hp,12)
+    g_z_autocorrelation = tsfresh.feature_extraction.feature_calculators.autocorrelation(Gyro_z_hp,12)
+
+    g_dos = {"g_y_autocorrelation":[g_y_autocorrelation],"g_z_autocorrelation":[g_z_autocorrelation]}
+
+    # #g_x_sum_changes = tsfresh.feature_extraction.feature_calculators.absolute_sum_of_changes(Gyro_x_hp)
+    # g_y_sum_changes = tsfresh.feature_extraction.feature_calculators.absolute_sum_of_changes(Gyro_y_hp)
+    # g_z_sum_changes = tsfresh.feature_extraction.feature_calculators.absolute_sum_of_changes(Gyro_z_hp)
+
+    # g_tres = {"g_y_sum_changes":[g_y_sum_changes],"g_z_sum_changes":[g_z_sum_changes]}
+
+    #g_x_benfordCorrelation = tsfresh.feature_extraction.feature_calculators.benford_correlation(Gyro_x_hp)
+    g_y_benfordCorrelation = tsfresh.feature_extraction.feature_calculators.benford_correlation(Gyro_y_hp)
+    g_z_benfordCorrelation = tsfresh.feature_extraction.feature_calculators.benford_correlation(Gyro_z_hp)
+
+    g_cuatro = {"g_y_benfordCorrelation":[g_y_benfordCorrelation],"g_z_benfordCorrelation":[g_z_benfordCorrelation]}
+
+    # #g_x_c3 = tsfresh.feature_extraction.feature_calculators.c3(Gyro_x_hp,25)
+    # g_y_c3 = tsfresh.feature_extraction.feature_calculators.c3(Gyro_y_hp,12)
+    # g_z_c3 = tsfresh.feature_extraction.feature_calculators.c3(Gyro_z_hp,12)
+
+    # g_cinco = {"g_y_c3":[g_y_c3],"g_z_c3":[g_z_c3]}
+
+    #g_x_cid_ce = tsfresh.feature_extraction.feature_calculators.cid_ce(Gyro_x_hp,False)
+    g_y_cid_ce = tsfresh.feature_extraction.feature_calculators.cid_ce(Gyro_y_hp,False)
+    g_z_cid_ce = tsfresh.feature_extraction.feature_calculators.cid_ce(Gyro_z_hp,False)
+
+    g_seis = {"g_y_cid_ce":[g_y_cid_ce],"g_z_cid_ce":[g_z_cid_ce]}
+
+    #g_x_kurtosis = tsfresh.feature_extraction.feature_calculators.kurtosis(Gyro_x_hp)
+    g_y_kurtosis = tsfresh.feature_extraction.feature_calculators.kurtosis(Gyro_y_hp)
+    g_z_kurtosis = tsfresh.feature_extraction.feature_calculators.kurtosis(Gyro_z_hp)
+
+    g_siete = {"g_y_kurtosis":[g_y_kurtosis],"g_z_kurtosis":[g_z_kurtosis]}
+
+    #g_x_skewness = tsfresh.feature_extraction.feature_calculators.skewness(Gyro_x_hp)
+    g_y_skewness = tsfresh.feature_extraction.feature_calculators.skewness(Gyro_y_hp)
+    g_z_skewness = tsfresh.feature_extraction.feature_calculators.skewness(Gyro_z_hp)
+
+    g_ocho = {"g_y_skewness":[g_y_skewness],"g_z_skewness":[g_z_skewness]}
+
+    #g_x_maximum = tsfresh.feature_extraction.feature_calculators.absolute_maximum(Gyro_x_hp)
+    g_y_maximum = tsfresh.feature_extraction.feature_calculators.absolute_maximum(Gyro_y_hp)
+    g_z_maximum = tsfresh.feature_extraction.feature_calculators.absolute_maximum(Gyro_z_hp)
+
+    g_nueve = {"g_y_maximum":[g_y_maximum],"g_z_maximum":[g_z_maximum]}
+
+    #g_x_minimum = tsfresh.feature_extraction.feature_calculators.minimum(Gyro_x_hp)
+    g_y_minimum = tsfresh.feature_extraction.feature_calculators.minimum(Gyro_y_hp)
+    g_z_minimum = tsfresh.feature_extraction.feature_calculators.minimum(Gyro_z_hp)
+
+    g_diez = {"g_y_minimum":[g_y_minimum],"g_z_minimum":[g_z_minimum]}
+
+    # #g_x_number_peaks = tsfresh.feature_extraction.feature_calculators.number_peaks(Gyro_x_hp,0)
+    # g_y_number_peaks = tsfresh.feature_extraction.feature_calculators.number_peaks(Gyro_y_hp,0)
+    # g_z_number_peaks = tsfresh.feature_extraction.feature_calculators.number_peaks(Gyro_z_hp,0)
+
+    # g_once = {"g_y_number_peaks":[g_y_number_peaks],"g_z_number_peaks":[g_z_number_peaks]}
+
+    #g_x_median = tsfresh.feature_extraction.feature_calculators.median(Gyro_x_hp)
+    g_y_median = tsfresh.feature_extraction.feature_calculators.median(Gyro_y_hp)
+    g_z_median = tsfresh.feature_extraction.feature_calculators.median(Gyro_z_hp)
+
+    g_doce = {"g_y_median":[g_y_median],"g_z_median":[g_z_median]}
+
+    #g_x_standard_deviation = tsfresh.feature_extraction.feature_calculators.standard_deviation(Gyro_x_hp)
+    g_y_standard_deviation = tsfresh.feature_extraction.feature_calculators.standard_deviation(Gyro_y_hp)
+    g_z_standard_deviation = tsfresh.feature_extraction.feature_calculators.standard_deviation(Gyro_z_hp)
+
+    g_trece = {"g_y_standard_deviation":[g_y_standard_deviation],"g_z_standard_deviation":[g_z_standard_deviation]}
+
+   
+    fourier = np.fft.fft(Gyro_y_hp)
+    g_y_fft = {}
+    for x in range(5):
+        maxValue = np.max(fourier)
+        pos = np.where(fourier == maxValue)[0]
+        fourier[pos] = 0 
+        g_y_fft["g_y_freq"+str(x)]=pos[0]
+
+
+    fourier = np.abs(np.fft.fft(Gyro_z_hp))
+    g_z_fft = {}
+    for x in range(5):
+        maxValue = np.max(fourier)
+        pos = np.where(fourier == maxValue)[0]
+        fourier[pos] = 0 
+        g_z_fft["g_z_freq"+str(x)]=pos[0]
+
+    g_catorce = {**g_y_fft, **g_z_fft}
+
+    m_x_autocorrelation = tsfresh.feature_extraction.feature_calculators.autocorrelation(Magnet_x_low,25)
+    m_y_autocorrelation = tsfresh.feature_extraction.feature_calculators.autocorrelation(Magnet_y_low,25)
+    m_z_autocorrelation = tsfresh.feature_extraction.feature_calculators.autocorrelation(Magnet_z_low,25)
+
+    m_uno = {"m_x_autocorrelation":[m_x_autocorrelation],"m_y_autocorrelation":[m_y_autocorrelation],"m_z_autocorrelation":[m_z_autocorrelation]}
+    
+    m_x_sum_changes = tsfresh.feature_extraction.feature_calculators.absolute_sum_of_changes(Magnet_x_low)
+    m_y_sum_changes = tsfresh.feature_extraction.feature_calculators.absolute_sum_of_changes(Magnet_y_low)
+    m_z_sum_changes = tsfresh.feature_extraction.feature_calculators.absolute_sum_of_changes(Magnet_z_low)
+
+    m_dos = {"m_x_sum_changes":[m_x_sum_changes],"m_y_sum_changes":[m_y_sum_changes],"m_z_sum_changes":[m_z_sum_changes]}
+    
+    m_x_benfordCorrelation = tsfresh.feature_extraction.feature_calculators.benford_correlation(Magnet_x_low)
+    m_y_benfordCorrelation = tsfresh.feature_extraction.feature_calculators.benford_correlation(Magnet_y_low)
+    m_z_benfordCorrelation = tsfresh.feature_extraction.feature_calculators.benford_correlation(Magnet_z_low)
+
+    m_tres = {"m_x_benfordCorrelation":[m_x_benfordCorrelation],"m_y_benfordCorrelation":[m_y_benfordCorrelation],"m_z_benfordCorrelation":[m_z_benfordCorrelation]}
+    
+    # m_x_c3 = tsfresh.feature_extraction.feature_calculators.c3(Magnet_x_low,12)
+    # m_y_c3 = tsfresh.feature_extraction.feature_calculators.c3(Magnet_y_low,12)
+    # m_z_c3 = tsfresh.feature_extraction.feature_calculators.c3(Magnet_z_low,12)
+
+    # m_cuatro = {"m_x_c3":[m_x_c3],"m_y_c3":[m_y_c3],"m_z_c3":[m_z_c3]}
+    
+    m_x_cid_ce = tsfresh.feature_extraction.feature_calculators.cid_ce(Magnet_x_low,False)
+    m_y_cid_ce = tsfresh.feature_extraction.feature_calculators.cid_ce(Magnet_y_low,False)
+    m_z_cid_ce = tsfresh.feature_extraction.feature_calculators.cid_ce(Magnet_z_low,False)
+
+    m_cinco = {"m_x_cid_ce":[m_x_cid_ce],"m_y_cid_ce":[m_y_cid_ce],"m_z_cid_ce":[m_z_cid_ce]}
+    
+    m_x_kurtosis = tsfresh.feature_extraction.feature_calculators.kurtosis(Magnet_x_low)
+    m_y_kurtosis = tsfresh.feature_extraction.feature_calculators.kurtosis(Magnet_y_low)
+    m_z_kurtosis = tsfresh.feature_extraction.feature_calculators.kurtosis(Magnet_z_low)
+
+    m_seis = {"m_x_kurtosis":[m_x_kurtosis],"m_y_kurtosis":[m_y_kurtosis],"m_z_kurtosis":[m_z_kurtosis]}
+    
+    m_x_skewness = tsfresh.feature_extraction.feature_calculators.skewness(Magnet_x_low)
+    m_y_skewness = tsfresh.feature_extraction.feature_calculators.skewness(Magnet_y_low)
+    m_z_skewness = tsfresh.feature_extraction.feature_calculators.skewness(Magnet_z_low)
+
+    m_siete = {"m_x_skewness":[m_x_skewness],"m_y_skewness":[m_y_skewness],"m_z_skewness":[m_z_skewness]}
+    
+    m_x_maximum = tsfresh.feature_extraction.feature_calculators.absolute_maximum(Magnet_x_low)
+    m_y_maximum = tsfresh.feature_extraction.feature_calculators.absolute_maximum(Magnet_y_low)
+    m_z_maximum = tsfresh.feature_extraction.feature_calculators.absolute_maximum(Magnet_z_low)
+
+    m_ocho = {"m_x_maximum":[m_x_maximum],"m_y_maximum":[m_y_maximum],"m_z_maximum":[m_z_maximum]}
+    
+    m_x_minimum = tsfresh.feature_extraction.feature_calculators.minimum(Magnet_x_low)
+    m_y_minimum = tsfresh.feature_extraction.feature_calculators.minimum(Magnet_y_low)
+    m_z_minimum = tsfresh.feature_extraction.feature_calculators.minimum(Magnet_z_low)
+
+    m_nueve = {"m_x_minimum":[m_x_minimum],"m_y_minimum":[m_y_minimum],"m_z_minimum":[m_z_minimum]}
+    
+    # m_x_number_peaks = tsfresh.feature_extraction.feature_calculators.number_peaks(Magnet_x_low,0)
+    # m_y_number_peaks = tsfresh.feature_extraction.feature_calculators.number_peaks(Magnet_y_low,0)
+    # m_z_number_peaks = tsfresh.feature_extraction.feature_calculators.number_peaks(Magnet_z_low,0)
+
+    # m_diez = {"m_x_number_peaks":[m_x_number_peaks],"m_y_number_peaks":[m_y_number_peaks],"m_z_number_peaks":[m_z_number_peaks]}
+    
+    m_x_median = tsfresh.feature_extraction.feature_calculators.median(Magnet_x_low)
+    m_y_median = tsfresh.feature_extraction.feature_calculators.median(Magnet_y_low)
+    m_z_median = tsfresh.feature_extraction.feature_calculators.median(Magnet_z_low)
+
+    m_once = {"m_x_median":[m_x_median],"m_y_median":[m_y_median],"m_z_median":[m_z_median]}
+    
+    m_x_standard_deviation = tsfresh.feature_extraction.feature_calculators.standard_deviation(Magnet_x_low)
+    m_y_standard_deviation = tsfresh.feature_extraction.feature_calculators.standard_deviation(Magnet_y_low)
+    m_z_standard_deviation = tsfresh.feature_extraction.feature_calculators.standard_deviation(Magnet_z_low)
+
+    m_doce = {"m_x_standard_deviation":[m_x_standard_deviation],"m_y_standard_deviation":[m_y_standard_deviation],"m_z_standard_deviation":[m_z_standard_deviation]}
+
+    fourier = np.abs(np.fft.fft(Magnet_x_low))
+    m_x_fft = {}
+    for x in range(2):
+        maxValue = np.max(fourier)
+        pos = np.where(fourier == maxValue)[0]
+        fourier[pos] = 0 
+        m_x_fft["m_x_freq"+str(x)]=pos[0]
+
+
+    fourier = np.abs(np.fft.fft(Magnet_y_low))
+    m_y_fft = {}
+    for x in range(2):
+        maxValue = np.max(fourier)
+        pos = np.where(fourier == maxValue)[0]
+        fourier[pos] = 0 
+        m_y_fft["m_y_freq"+str(x)]=pos[0]
+
+
+    fourier = np.abs(np.fft.fft(Magnet_z_low))
+    m_z_fft = {}
+    for x in range(2):
+        maxValue = np.max(fourier)
+        pos = np.where(fourier == maxValue)[0]
+        fourier[pos] = 0 
+        m_z_fft["m_z_freq"+str(x)]=pos[0]
+
+    m_trece = {**m_x_fft,**m_y_fft,**m_z_fft}
+
+
+    acel = {**a_previos, **a_uno, **a_dos, **a_tres, **a_cuatro, **a_cinco, **a_seis, **a_siete, **a_ocho, **a_nueve, **a_diez, **a_once, **a_doce, **a_trece, **a_catorce, **a_quince, **a_dieciseis, **a_diecisiete,** a_dieciocho, **a_diecinueve}
+
+    gyro = { **g_dos, **g_cuatro, **g_seis, **g_siete, **g_ocho, **g_nueve, **g_diez,  **g_doce, **g_trece, **g_catorce}
+
+    magne = {**m_uno, **m_dos, **m_tres, **m_cinco, **m_seis, **m_siete, **m_ocho, **m_nueve, **m_once, **m_doce, **m_trece}
+
+    features = pd.DataFrame({**acel, **gyro, **magne}) #, **gyro, **magne
 
     elapsed = time.time() - t
 
@@ -598,18 +908,6 @@ def getData(data):
     # MagnetX_int = modified_Magnet_x[50:250]
     # MagnetY_int = modified_Magnet_y[50:250]
     # MagnetZ_int = modified_Magnet_z[50:250]
-    rawAccel_x = (AccelX_int)
-    rawAccel_y = (AccelY_int)
-    rawAccel_z = (AccelZ_int)
-
-    rawGyro_x = (GyroX_int)
-    rawGyro_y = (GyroY_int)
-    rawGyro_z = (GyroZ_int)
-
-    rawMagnet_x = (MagnetX_int)
-    rawMagnet_y = (MagnetY_int)
-    rawMagnet_z = (MagnetZ_int)
-
 
     #features = pd.DataFrame({"Acel_x": AccelX_int, "Acel_y": AccelY_int, "Acel_z": AccelZ_int, "Gyro_x": GyroX_int, "Gyro_y": GyroY_int, "Gyro_z": GyroZ_int, "Magnet_x":MagnetX_int, "Magnet_y": MagnetY_int, "Magnet_z": MagnetZ_int})
         
@@ -628,11 +926,17 @@ def readDataFrame(file, df, lastDay, windowDiv, overlapTime):
     period = 0.05
     totalLength = 200
     windowLength = round(totalLength/windowDiv)
-    overlapLength = round(overlapTime/period)
-    totalWindows = round(totalLength/(windowLength - overlapLength) - 1)
+    if (overlapTime == 0):
+        overlapLength = 0
+    else:
+        overlapLength = round(overlapTime/period)
+
+    totalWindows = max(1,round(totalLength/(windowLength - overlapLength) - 1))
     currentSec = 0
     results = pd.DataFrame()
     data = pd.DataFrame
+
+    sineday = 0
 
     Sensor = readSensorNum(file)
     
@@ -664,7 +968,10 @@ def readDataFrame(file, df, lastDay, windowDiv, overlapTime):
 
                     for i in range(totalWindows):  ## it is iterated windowDiv times
 
-                        rawDataDiv = pd.DataFrame(df.loc[(x + i*(windowLength - overlapLength)):(x + (i+2)*(windowLength - overlapLength))]) ## it is iterated windowDiv times
+                        if overlapLength == 0:
+                            rawDataDiv = pd.DataFrame(df.loc[(x + i*(windowLength - overlapLength)):(x + (i+1)*(windowLength - overlapLength))]) ## it is iterated windowDiv times
+                        else:
+                            rawDataDiv = pd.DataFrame(df.loc[(x + i*(windowLength - overlapLength)):(x + (i+2)*(windowLength - overlapLength))]) ## it is iterated windowDiv times
 
                         features = getFeatures(rawDataDiv)    #getFeatures(rawDataDiv)
 
@@ -675,25 +982,29 @@ def readDataFrame(file, df, lastDay, windowDiv, overlapTime):
                             sec = sec - (6000 - 250)
                             min = str(int(min) + 1)
 
-                        heading = pd.DataFrame({'Sensor': [Sensor], "Lenght": [windowLength], 'Date': [date], 'Hour': [hour], 'Minutes': [min], "Seconds": [str(sec)]})
+                        sineDay = np.sin(2 * np.pi * int(hour)/23.0)
+
+                        heading = pd.DataFrame({'Sensor': [Sensor], "Lenght": [windowLength], 'Date': [date], 'Hour': [hour], 'Minutes': [min], "Seconds": [str(sec)], "SineDay":[sineDay]})
                         
-                        ##when raw data
-                        # currentSec = sec
+                        #when raw data
+                        currentSec = sec
 
-                        # for j in range(features.shape[0]):
-                        #     if j > 0:
-                        #         currentSec += period*100
-                        #         heading = heading.append(pd.DataFrame({'Sensor': [Sensor], "Lenght": [windowLength], 'Date': [date], 'Hour': [hour], 'Minutes': [min], "Seconds": [str(currentSec)]}))
+                        for j in range(features.shape[0]):
+                            if j > 0:
+                                currentSec += period*100
+                                heading = heading.append(pd.DataFrame({'Sensor': [Sensor], "Lenght": [windowLength], 'Date': [date], 'Hour': [hour], 'Minutes': [min], "Seconds": [str(currentSec)], "SineDay":[sineDay]}))
                             
-                        # heading = heading.reset_index()
+                        heading = heading.reset_index()
 
-                        # heading = heading.drop(columns = ["index"])
+                        heading = heading.drop(columns = ["index"])
 
                         # print(heading.shape[0])
                         # print(features.shape[0])
                         # print(features)
+                        # features.to_csv(str(crotal) + ".csv")
+                        # input("Press Enter to continue...")
                         # print(heading)
-                        ##when raw data
+                        #when raw data
 
                         data = pd.concat([heading, features], axis=1) #, join='inner'
 
@@ -766,7 +1077,7 @@ def readData(crotal, raw_path, features_path, orga):
     
         pos2 += 1
     #print(finalFiles)
-    print("Files appended Crotal: "+ str(crotal))
+    #print("Files appended Crotal: "+ str(crotal))
 
     content = pd.DataFrame()
     existFile = 0
@@ -796,16 +1107,19 @@ def readData(crotal, raw_path, features_path, orga):
 
         df = pd.read_csv(file, sep=';', names = ['HORA','Timestamp','Accel_x','Accel_y','Accel_z','Gyro_x','Gyro_y','Gyro_z','Magnet_x','Magnet_y','Magnet_z'])
 
+        windowDiv = 4 #1
+        overlapTime = 1.25 #0
+
         if content.empty :
-            content = readDataFrame(file, df, lastDay, 4, 1.25) #4 , 1.25
+            content = readDataFrame(file, df, lastDay, windowDiv, overlapTime) #4 , 1.25
         else:
-            content = content.append(readDataFrame(file, df, lastDay, 4, 1.25),  ignore_index=True) #4 , 1.25
+            content = content.append(readDataFrame(file, df, lastDay, windowDiv, overlapTime),  ignore_index=True) #4 , 1.25
         #print(content)
         # break
         print("Crotal: "+str(crotal)+" file: " + file)
         filesRead += 1
 
-        if filesRead >= 24:
+        if filesRead >= 1:
             filesRead = 0
 
             if existFile == 1:
@@ -826,10 +1140,6 @@ def readData(crotal, raw_path, features_path, orga):
     
 
 
-
-    
-
-
 start = time.time()
 
 organizadorPath  = 'Organizador.xlsx'
@@ -846,12 +1156,12 @@ directorio = 'D:/DatosOvejas/'
 
 features_path = directorio + 'OvejasFeaturesOver/' #D:/DatosOvejas/
 
-n_jobs = multiprocessing.cpu_count() - 4
+n_jobs = multiprocessing.cpu_count() - 2
 
 print(n_jobs)
 
-#crotal = 4990
-#readData(crotal, raw_path, features_path, orga)           ##   Debug Line
+crotal = 4990
+readData(crotal, raw_path, features_path, orga)           ##   Debug Line
 Parallel(n_jobs=n_jobs)(delayed(readData)(crotal, raw_path, features_path, orga) for crotal in crotales)
 
 end = time.time()
